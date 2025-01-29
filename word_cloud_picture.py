@@ -44,7 +44,7 @@ def get_img(field, targetImgSrc, resImgSrc):
     wc = WordCloud(
         background_color='white',
         mask=img_arr,
-        font_path='STHUPO.TTF'
+        # font_path='STHUPO.TTF'
     )
     wc.generate_from_text(string)
 
@@ -87,7 +87,7 @@ def get_addressCompanyTags_img(targetImgSrc, resImgSrc, addrress):
     wc = WordCloud(
         background_color='white',
         mask=img_arr,
-        font_path='STHUPO.TTF'
+        # font_path='STHUPO.TTF'
     )
     wc.generate_from_text(string)
 
@@ -104,8 +104,8 @@ def get_addressCompanyTags_img(targetImgSrc, resImgSrc, addrress):
 
 
 
-get_img('companyTitle',r'.\static\2.jpg',r'.\static\companyTitle.jpg')
-get_img('companyTags', r'.\static\2.jpg', r'.\static\companyTags.jpg')
+get_img('companyTitle',r'./static/2.jpg',r'./static/companyTitle.jpg')
+get_img('companyTags', r'./static/2.jpg', r'./static/companyTags.jpg')
 
 # import os
 #

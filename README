@@ -1,0 +1,234 @@
+# 项目名称：BOSS直聘数据可视化分析系统
+
+## 概述  
+这是一个基于Django框架构建的BOSS直聘职位数据分析与可视化平台，提供数据看板、趋势分析、职位分布热力图等功能。本指南将帮助您在本地开发环境（特别是macOS ARM架构设备）中配置并运行本项目。
+
+---
+
+## 环境要求  
+- **操作系统**：macOS (建议M1/M2芯片设备使用macOS Ventura 13.x+)  
+- **Python版本**：3.9+  
+- **数据库**：MySQL 8.0+  
+- **包管理工具**：Homebrew、pip  
+- **内存**：建议8GB+（处理大数据集时）  
+
+---
+
+## 🛠️ 环境配置  
+
+### 1. 系统依赖安装  
+```bash  
+# 安装Homebrew（如未安装）  
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"  
+
+# 安装编译依赖  
+brew install openssl@3 cmake freetype pkg-config mysql-client  
+
+# 设置OpenSSL环境变量（添加到~/.zshrc）  
+echo 'export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"' >> ~/.zshrc  
+echo 'export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib"' >> ~/.zshrc  
+echo 'export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include"' >> ~/.zshrc  
+source ~/.zshrc  
+```  
+
+### 2. 创建虚拟环境  
+```bash  
+python -m venv .venv  
+source .venv/bin/activate  
+```  
+
+### 3. 安装Python依赖  
+```bash  
+# 更新pip工具  
+pip install --upgrade pip  
+
+# 安装优化后的依赖列表（推荐使用以下内容更新requirements.txt）  
+pip install -r requirements.txt  
+```  
+
+---
+
+## 📦 推荐的requirements.txt  
+```python  
+Django==4.2.3  
+django-simpleui==2023.5.9  
+PyMySQL==1.0.2  
+pandas==1.4.3  
+matplotlib==3.5.2  
+wordcloud==1.8.2.2  
+selenium==4.3.0  
+cryptography==37.0.4  
+numpy==1.23.1  
+# ...其他依赖保持原列表内容  
+```  
+
+---
+
+## 🗄️ 数据库配置  
+
+### 1. 创建数据库  
+```sql  
+CREATE DATABASE boss_data  
+    CHARACTER SET utf8mb4  
+    COLLATE utf8mb4_unicode_ci;  
+```  
+
+### 2. 修改Django配置  
+编辑 `boss直聘数据可视化分析/settings.py`：  
+```python  
+DATABASES = {  
+    'default': {  
+        'ENGINE': 'django.db.backends.mysql',  
+        'NAME': 'boss_data',  
+        'USER': 'your_username',  
+        'PASSWORD': 'your_password',  
+        'HOST': 'localhost',  
+        'PORT': '3306',  
+        'OPTIONS': {'charset': 'utf8mb4'},  
+    }  
+}  
+```  
+
+### 3. 导入初始数据  
+```bash  
+mysql -u root -p boss_data < path/to/boss.sql  
+```  
+
+---
+
+## 🚀 项目初始化  
+
+### 1. 应用数据库迁移  
+```bash  
+python manage.py makemigrations  
+python manage.py migrate  
+```  
+
+### 2. 创建管理员账户  
+```bash  
+python manage.py createsuperuser  
+# 按提示输入管理员信息  
+```  
+
+### 3. 收集静态文件  
+```bash  
+python manage.py collectstatic --noinput  
+```  
+
+---
+
+## ⚡ 运行项目  
+
+### 开发模式  
+```bash  
+python manage.py runserver --insecure 0.0.0.0:8000  
+```  
+访问 http://localhost:8000 查看前端界面  
+访问 http://localhost:8000/admin 进入管理后台  
+
+### 生产模式建议  
+推荐使用Gunicorn+Nginx部署：  
+```bash  
+gunicorn --workers 4 --bind 0.0.0.0:8000 boss直聘数据可视化分析.wsgi:application  
+```  
+
+---
+
+## 🔧 故障排查  
+
+### 常见问题1：cryptography安装失败  
+**解决方案**：  
+1. 确认已正确设置OpenSSL环境变量  
+2. 尝试升级setuptools：  
+   ```bash  
+   pip install --upgrade setuptools  
+   ```  
+
+### 常见问题2：ARM架构浏览器驱动  
+**解决方案**：  
+1. 下载ARM版ChromeDriver：  
+   ```bash  
+   # 使用Homebrew安装  
+   brew install chromedriver --cask  
+   ```  
+2. 将驱动文件放入PATH路径：  
+   ```bash  
+   cp /opt/homebrew/bin/chromedriver .venv/bin/  
+   ```  
+
+### 常见问题3：服务器日志出现.map文件404错误  
+**原因分析**：  
+- JavaScript文件中的 `//# sourceMappingURL` 注释导致浏览器请求不存在的源映射文件  
+- 常见于第三方库（如jQuery、Parallax）的压缩版本  
+
+**解决步骤**：  
+1. **处理jquery.min.map错误**：  
+   ```bash  
+   # 1. 打开文件  
+   vim static/js/jquery-1.11.0.min.js  
+
+   # 2. 删除文件末尾的注释（示例如下）  
+   # 原内容: //# sourceMappingURL=jquery.min.map  
+   # 修改后: 删除该行  
+   ```  
+
+2. **处理parallax.min.js.map错误**：  
+   ```bash  
+   # 检查文件是否存在  
+   ls static/js/parallax.min.js  
+
+   # 若存在则编辑文件删除注释  
+   vim static/js/parallax.min.js  
+   # 原内容: //# sourceMappingURL=parallax.min.js.map  
+   ```  
+
+3. **批量处理其他文件**：  
+   ```bash  
+   # 使用sed命令批量删除所有JS文件中的源映射注释  
+   find static/js/ -type f -name "*.js" -exec sed -i '' '/sourceMappingURL/d' {} +  
+   ```  
+
+4. **生产环境优化**：  
+   ```bash  
+   # 安装压缩工具  
+   npm install uglify-js -g  
+
+   # 压缩并移除注释  
+   uglifyjs input.js --compress --mangle --output output.js  
+   ```  
+
+**验证结果**：  
+```bash  
+# 清理浏览器缓存后重新加载页面  
+# 监控服务器日志确认无.map文件请求  
+```  
+
+**额外建议**：  
+- 在浏览器开发者工具中禁用源映射：  
+  `Chrome设置 → Sources → 取消勾选"Enable JavaScript source maps"`  
+- 使用Django插件自动处理静态文件：  
+  ```python  
+  # settings.py  
+  STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'  
+  ```  
+
+---
+
+## 📂 项目结构  
+```  
+├── boss直聘数据可视化分析      # Django项目配置  
+│   ├── settings.py           # 主配置文件  
+│   ├── urls.py               # 路由配置  
+├── data_analysis             # 数据分析应用  
+│   ├── models.py             # 数据模型  
+│   ├── views.py              # 业务逻辑  
+├── static                    # 静态资源  
+│   ├── css                   # 样式表  
+│   └── js                    # 脚本文件  
+└── templates                 # 前端模板  
+```  
+
+---
+
+## 📄 许可证  
+本项目采用 MIT 许可证，详细信息请查看LICENSE文件。
